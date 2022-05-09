@@ -42,14 +42,33 @@
 MESSAGE-FN would be `message' recieving FORMAT-STRING and ARGS."
   (if (or (null format-string) (string-empty-p format-string))
       (funcall message-fn nil)
-    (let ((new-msg (apply #'format-message format-string args))
-          (old-msg (current-message)))
-      (if (null old-msg)
-          (funcall message-fn "%s" new-msg)
-        (let ((inhibit-message t))
-          (funcall message-fn "%s" new-msg))
-        (let ((message-log-max nil))
-          (funcall message-fn "%s" (concat old-msg "\n" new-msg)))))))
+    (let ((incoming (apply #'format-message format-string args))
+          (current (current-message)))
+      (let ((inhibit-message t))
+        (funcall message-fn "%s" incoming))
+      (let ((message-log-max nil))
+        (funcall message-fn "%s" (comessage--compose-message current incoming))))))
+
+(defun comessage--compose-message (current incoming)
+  "Compose message by CURRENT and INCOMING."
+  (setq incoming (propertize incoming 'comessage-group (or (get-text-property 0 'comessage-group incoming)
+                                                           'comessage--default-group)))
+  (with-temp-buffer
+    (let ((inhibit-read-only t))
+      (insert (string-trim (or current "")))
+      (unless (get-text-property (point-min) 'comessage-group)
+        (put-text-property (point-min) (point-max) 'comessage-group 'comessage--default-group))
+      (goto-char (point-min))
+
+      (while (not (or (eobp) (eq (get-text-property (point) 'comessage-group)
+                                 (get-text-property 0 'comessage-group incoming))))
+        (goto-char (or (next-single-property-change (point) 'comessage-group)
+                       (point-max))))
+      (when (and (eobp) (> (buffer-size) 0))
+        (insert "\n"))
+      (delete-region (point) (or (next-single-property-change (point) 'comessage-group) (point-max)))
+      (insert incoming)
+      (buffer-string))))
 
 (define-minor-mode comessage-mode
   "A global minor mode that provides message coexistence."
