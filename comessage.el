@@ -59,9 +59,9 @@ MESSAGE-FN would be `message' recieving FORMAT-STRING and ARGS."
                                  (comessage--group incoming))))
         (goto-char (or (next-single-property-change (point) 'comessage-group)
                        (point-max))))
-      (when (and (eobp) (> (buffer-size) 0))
-        (insert "\n"))
-      (delete-region (point) (or (next-single-property-change (point) 'comessage-group) (point-max)))
+      (if (and (eobp) (> (buffer-size) 0))
+          (insert "\n")
+        (delete-region (point) (or (next-single-property-change (point) 'comessage-group) (point-max))))
       (insert incoming)
       (buffer-string))))
 
