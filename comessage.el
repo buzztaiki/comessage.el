@@ -75,12 +75,10 @@ MESSAGE-FN would be `message' recieving FORMAT-STRING and ARGS."
 
 (define-minor-mode comessage-mode
   "A global minor mode that provides message coexistence."
-  :global nil
+  :global t
   (if comessage-mode
       (advice-add 'message :around #'comessage--message-advice)
     (advice-remove 'message #'comessage--message-advice)))
-
-(define-globalized-minor-mode comessage-global-mode comessage-mode comessage--turn-on)
 
 (defun comessage--turn-on ()
   "Turn on `comessage-mode'."

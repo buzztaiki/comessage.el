@@ -13,7 +13,7 @@ For example, to separate flymake and eldoc messages, you can do as the following
 (advice-add 'flymake-goto-next-error :around #'my/comessage-group-flymake)
 (advice-add 'eldoc-message :around #'my/comessage-group-eldoc)
 (advice-add 'eldoc-minibuffer-message :around #'my/comessage-group-eldoc)
-(comessage-global-mode 1)
+(comessage-mode 1)
 ```
 ## License
 GPLv3

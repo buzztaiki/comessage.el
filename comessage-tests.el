@@ -57,31 +57,40 @@
     (should (equal got wont))))
 
 
+(defun comessage-tests-with-comessage-mode (on/off fn)
+  "Call FN with `comessage-mode' On/Off by ON/OFF."
+  (let ((orig comessage-mode))
+    (message nil)
+    (comessage-mode (if on/off 1 -1))
+    (unwind-protect
+        (funcall fn)
+      (comessage-mode (if orig 1 -1)))))
+
 (ert-deftest test-comessage-with-group/if-enabled ()
-  (message nil)
-  (with-temp-buffer
-    (comessage-mode 1)
-    (comessage-with-group 'noise
-      (lambda ()
-        (message "moo")
-        (should (equal (current-message) "moo"))
-        (message "woo")
-        (should (equal (current-message) "woo"))))
-    (message "cow")
-    (should (equal (current-message) "woo\ncow"))))
+  (comessage-tests-with-comessage-mode
+   t
+   (lambda ()
+     (comessage-with-group 'noise
+                           (lambda ()
+                             (message "moo")
+                             (should (equal (current-message) "moo"))
+                             (message "woo")
+                             (should (equal (current-message) "woo"))))
+     (message "cow")
+     (should (equal (current-message) "woo\ncow")))))
 
 (ert-deftest test-comessage-with-group/if-disabled ()
-  (message nil)
-  (with-temp-buffer
-    (comessage-mode -1)
-    (comessage-with-group 'noise
-      (lambda ()
-        (message "moo")
-        (should (equal (current-message) "moo"))
-        (message "woo")
-        (should (equal (current-message) "woo"))))
-    (message "cow")
-    (should (equal (current-message) "cow"))))
+  (comessage-tests-with-comessage-mode
+   nil
+   (lambda ()
+     (comessage-with-group 'noise
+                           (lambda ()
+                             (message "moo")
+                             (should (equal (current-message) "moo"))
+                             (message "woo")
+                             (should (equal (current-message) "woo"))))
+     (message "cow")
+     (should (equal (current-message) "cow")))))
 
 (provide 'comessage-tests)
 ;;; comessage-tests.el ends here
