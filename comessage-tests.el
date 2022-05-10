@@ -57,5 +57,31 @@
     (should (equal got wont))))
 
 
+(ert-deftest test-comessage-with-group/if-enabled ()
+  (message nil)
+  (with-temp-buffer
+    (comessage-mode 1)
+    (comessage-with-group 'noise
+      (lambda ()
+        (message "moo")
+        (should (equal (current-message) "moo"))
+        (message "woo")
+        (should (equal (current-message) "woo"))))
+    (message "cow")
+    (should (equal (current-message) "woo\ncow"))))
+
+(ert-deftest test-comessage-with-group/if-disabled ()
+  (message nil)
+  (with-temp-buffer
+    (comessage-mode -1)
+    (comessage-with-group 'noise
+      (lambda ()
+        (message "moo")
+        (should (equal (current-message) "moo"))
+        (message "woo")
+        (should (equal (current-message) "woo"))))
+    (message "cow")
+    (should (equal (current-message) "cow"))))
+
 (provide 'comessage-tests)
 ;;; comessage-tests.el ends here

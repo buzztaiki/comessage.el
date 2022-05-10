@@ -20,7 +20,7 @@
 
 ;;; Commentary:
 
-;; `comessage-mode' is a global minor mode that provides message coexistence.
+;; `comessage-mode' is a minor mode that provides message coexistence.
 ;; It will resolve multiple packages competing for message output (e.g. flymake and eldoc).
 
 ;; Example:
@@ -32,6 +32,7 @@
 ;; 	(advice-add 'flymake-goto-next-error :around #'my/comessage-group-flymake)
 ;; 	(advice-add 'eldoc-message :around #'my/comessage-group-eldoc)
 ;; 	(advice-add 'eldoc-minibuffer-message :around #'my/comessage-group-eldoc)
+;;	(comessage-global-mode 1)
 
 
 ;;; Code:
@@ -84,10 +85,16 @@ MESSAGE-FN would be `message' recieving FORMAT-STRING and ARGS."
 
 (define-minor-mode comessage-mode
   "A global minor mode that provides message coexistence."
-  :global t
+  :global nil
   (if comessage-mode
       (advice-add 'message :around #'comessage--message-advice)
     (advice-remove 'message #'comessage--message-advice)))
+
+(define-globalized-minor-mode comessage-global-mode comessage-mode comessage--turn-on)
+
+(defun comessage--turn-on ()
+  "Turn on `comessage-mode'."
+  (comessage-mode 1))
 
 (defun comessage (group format-string &rest args)
   "As same as (message FORMAT-STRING &rest ARGS).
