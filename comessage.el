@@ -102,7 +102,9 @@ Additionaly GROUP as a group of this message."
       (remove-function (symbol-function #'message) wrapper))))
 
 (defmacro comessage-define-advice (name group)
-  "Define an around advice NAME with GROUP as a message group."
+  "Define an around advice NAME with GROUP as a message group.
+
+In this advice, Display text of `message' is separete from other message texts."
   `(defun ,name (fn &rest args)
      (comessage-with-group ,group (lambda () (apply fn args)))))
 
