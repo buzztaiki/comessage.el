@@ -23,11 +23,16 @@
 ;; `comessage-mode' is a global minor mode that provides message coexistence.
 ;; It will resolve multiple packages competing for message output (e.g. flymake and eldoc).
 
-;;; TODO:
-;; - Categorize message texts by text-property `comessage-category'.
-;; - Overwrite message without accumulating them if it is in the same category.
-;; - Do the same thing for uncategorized messages.
-;; - Add helper function or macro for adding category to message text to customize existing functions.
+;; Example:
+;; To separate flymake and eldoc messages, you can do as the following configuration:
+;;
+;; 	(comessage-define-advice my/comessage-group-flymake 'flymake)
+;; 	(comessage-define-advice my/comessage-group-eldoc 'eldoc)
+;; 	
+;; 	(advice-add 'flymake-goto-next-error :around #'my/comessage-group-flymake)
+;; 	(advice-add 'eldoc-message :around #'my/comessage-group-eldoc)
+;; 	(advice-add 'eldoc-minibuffer-message :around #'my/comessage-group-eldoc)
+
 
 ;;; Code:
 
@@ -51,8 +56,7 @@ MESSAGE-FN would be `message' recieving FORMAT-STRING and ARGS."
 
 (defun comessage--compose-message (current incoming)
   "Compose message by CURRENT and INCOMING."
-  (setq incoming (propertize incoming 'comessage-group (or (get-text-property 0 'comessage-group incoming)
-                                                           'comessage--default-group)))
+  (setq incoming (comessage--apply-group incoming (or (comessage--group incoming) 'comessage--default-group)))
   (with-temp-buffer
     (let ((inhibit-read-only t))
       (insert (string-trim (or current "")))
@@ -61,7 +65,7 @@ MESSAGE-FN would be `message' recieving FORMAT-STRING and ARGS."
       (goto-char (point-min))
 
       (while (not (or (eobp) (eq (get-text-property (point) 'comessage-group)
-                                 (get-text-property 0 'comessage-group incoming))))
+                                 (comessage--group incoming))))
         (goto-char (or (next-single-property-change (point) 'comessage-group)
                        (point-max))))
       (when (and (eobp) (> (buffer-size) 0))
@@ -70,6 +74,14 @@ MESSAGE-FN would be `message' recieving FORMAT-STRING and ARGS."
       (insert incoming)
       (buffer-string))))
 
+(defun comessage--apply-group (str group)
+  "Apply GROUP to string STR as a message group."
+  (and str (propertize str 'comessage-group group)))
+
+(defun comessage--group (str)
+  "Return the message group of STR."
+  (and str (get-text-property 0 'comessage-group str)))
+
 (define-minor-mode comessage-mode
   "A global minor mode that provides message coexistence."
   :global t
@@ -77,6 +89,25 @@ MESSAGE-FN would be `message' recieving FORMAT-STRING and ARGS."
       (advice-add 'message :around #'comessage--message-advice)
     (advice-remove 'message #'comessage--message-advice)))
 
+(defun comessage (group format-string &rest args)
+  "As same as (message FORMAT-STRING &rest ARGS).
+Additionaly GROUP as a group of this message."
+  (apply #'message (comessage--apply-group format-string group) args))
+
+(defun comessage-with-group (group fn)
+  "Call FN with GROUP as a message group."
+  (let ((wrapper (lambda (fn format-string &rest args)
+                   (apply fn (comessage--apply-group format-string group) args))))
+    (unwind-protect
+        (progn
+          (add-function :around (symbol-function #'message) wrapper)
+          (funcall fn))
+      (remove-function (symbol-function #'message) wrapper))))
+
+(defmacro comessage-define-advice (name group)
+  "Define an around advice NAME with GROUP as a message group."
+  `(defun ,name (fn &rest args)
+     (comessage-with-group ,group (lambda () (apply fn args)))))
 
 (provide 'comessage)
 ;;; comessage.el ends here

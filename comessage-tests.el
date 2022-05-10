@@ -32,23 +32,23 @@
 
 (ert-deftest test-comessage--compose-message/when-add-same-group ()
   (should (equal (comessage--compose-message "woo" "moo") "moo"))
-  (should (equal (comessage--compose-message (propertize "woo" 'comessage-group 'noise)
-                                             (propertize "moo" 'comessage-group 'noise))
+  (should (equal (comessage--compose-message (comessage--apply-group "woo" 'noise)
+                                             (comessage--apply-group "moo" 'noise))
                  "moo")))
 
 (ert-deftest test-comessage--compose-message/when-add-another-group ()
-  (should (equal (comessage--compose-message (propertize "moo" 'comessage-group 'noise)
-                                             (propertize "cow" 'comessage-group 'animal))
+  (should (equal (comessage--compose-message (comessage--apply-group "moo" 'noise)
+                                             (comessage--apply-group "cow" 'animal))
                  "moo\ncow")))
 
 (ert-deftest test-comessage--compose-message/complex ()
   (let ((got (seq-reduce #'comessage--compose-message
-                         (list (propertize "moo" 'comessage-group 'noise)
-                               (propertize "cow" 'comessage-group 'animal)
+                         (list (comessage--apply-group "moo" 'noise)
+                               (comessage--apply-group "cow" 'animal)
                                "message"
-                               (propertize "vim" 'comessage-group 'editor)
-                               (propertize "cat" 'comessage-group 'animal)
-                               (propertize "emacs" 'comessage-group 'editor)
+                               (comessage--apply-group "vim" 'editor)
+                               (comessage--apply-group "cat" 'animal)
+                               (comessage--apply-group "emacs" 'editor)
                                "next message")
                          nil))
         (wont (mapconcat #'identity
