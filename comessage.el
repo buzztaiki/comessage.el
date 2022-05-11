@@ -80,10 +80,6 @@ MESSAGE-FN would be `message' recieving FORMAT-STRING and ARGS."
       (advice-add 'message :around #'comessage--message-advice)
     (advice-remove 'message #'comessage--message-advice)))
 
-(defun comessage--turn-on ()
-  "Turn on `comessage-mode'."
-  (comessage-mode 1))
-
 (defun comessage (group format-string &rest args)
   "As same as (message FORMAT-STRING &rest ARGS).
 Additionaly GROUP as a group of this message."
